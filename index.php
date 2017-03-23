@@ -10,15 +10,16 @@ if (! isset ( $_SESSION ['usr_id'] )) {
 <!doctype html>
 <html lang="en">
 <head>
+ <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 <link rel="stylesheet"
 	href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <link rel="stylesheet"
 	href="https://jqueryui.com/resources/demos/style.css">
-<link rel="stylesheet"
-	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-	type="text/css" />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
 <style>
 body {
 	font-family: Arial;
@@ -71,18 +72,6 @@ input[type=button] {
 </style>
 <script>
 
-
-
-  
-//   $(function() {
-    
-  
-
-//     $('.add-button').on('click', function() {
-//         var txtNewItem = $('#name').val();
-//         $(this).closest('div.container').find('ul').append('<li class="card">'+txtNewItem+'<button color="red"> x </button>'+'</li>');
-//     });
-
   $(document).ready(function(){
 	  $( ".sortable" ).sortable({
 	      connectWith: ".connectedSortable",
@@ -105,13 +94,6 @@ input[type=button] {
 			})
 
 
-	        
-	     // POST to server using $.post or $.ajax
-// 	        $.ajax({
-// 	            data: sort,
-// 	            type: 'POST',
-// 	            url: 'http://localhost/kanbanProject/update.php'
-// 	        });
 	      }
 	    }).disableSelection();
 
@@ -125,44 +107,52 @@ input[type=button] {
 				success: function(data){
 					console.log('data1= ',data);
 					var ele = JSON.parse(data);
-                    $("#toDo").append('<li class="card">' + ele.task_title + '<button id="delete_button" class="btn btn-danger" > x </button>'+'</li>');
+                    $("#toDo").append('<li id="'+ele.task_id +'" class="card">' + ele.task_title +
+                             '<button id="delete_button" class="btn btn-danger" > x </button>'+
+                             '<button id="update_button" class="update btn btn-success" data-toggle="modal" data-target="#myModal"> <i class="fa fa-pencil" aria-hidden="true"></i></button>'+'</li>');
 					console.log('ele= ',ele.task_title);
 				}
 			})
 		});
 		
 		function displayFromDatabase(){
+// 			$("#inProgress").empty();
+// 			$("#toDo").empty();
+// 			$("#test").empty();
+// 			$("#done").empty();
 			$.ajax({
-				url: "http://localhost/kanbanProject/ajax.php",
+				url: "http://localhost/kanbanProject/display.php",
 				type:"GET",
 				success: function(d){
 					$.each(JSON.parse(d), function(i, ele){
-						var btn = '<button id="delete_button" class="btn btn-danger" data-id="' + ele.task_id + '"> x </button>';
+						var btn = '<button id="delete_button" class="btn btn-danger" data-id="' + ele.task_id + '"> x </button>'
+						+'<button class="btn btn-success updat_utton" data-toggle="modal" data-target="#myModal" ><i class="fa fa-pencil" aria-hidden="true"></i></button>';
 						switch(ele.task_status) {
 							case "todo":
-								$("#toDo").append('<li class="card">' + ele.task_id + ">" + ele.task_title + " : " + ele.task_descp + btn +'</li>');
+								$("#toDo").append('<li id="'+ele.task_id +'" class="card">' +"<span>" +  ele.task_id + ") " + ele.task_title + " : " + ele.task_descp +"</span>"+ "<br>"+ btn  +'</li>');
 								break;
 							case "inprogress":
-								$("#inProgress").append('<li class="card">' + ele.task_id + ">" + ele.task_title + " : " + ele.task_descp + btn +'</li>');
+								$("#inProgress").append('<li id="'+ele.task_id +'" class="card">' + "<span>" +  ele.task_id + ") " + ele.task_title + " : " + ele.task_descp + "</span>"+"<br>"+ btn +'</li>');
 								break;
 							case "test":
-								$("#test").append('<li class="card">' + ele.task_id + ">" + ele.task_title + " : " + ele.task_descp + btn +'</li>');
+								$("#test").append('<li id="'+ele.task_id +'" class="card">' +"<span>" +  ele.task_id + ") " + ele.task_title + " : " + ele.task_descp + "</span>"+"<br>"+ btn +'</li>');
 								break;
 							case "done":
-								$("#done").append('<li class="card">' + ele.task_id + ">" + ele.task_title + " : " + ele.task_descp + btn +'</li>');
+								$("#done").append('<li id="'+ele.task_id +'" class="card">' + "<span>" + ele.task_id +") " + ele.task_title + " : " + ele.task_descp + "</span>" +"<br>"+ btn +'</li>');
 								break;
 						}
 					});
 					delete_row();
+					update_task();
 				}
 			});	
 		}
 
 		displayFromDatabase();
 
-		//===============================
+		//==============  Delete   =================
 		function delete_row() {
-			$("#toDo").find("button").on("click", function(){
+			$(".container").find(".btn").on("click", function(){
 				var ele = $(this);
 					id = ele.data().id;
 				$.ajax({
@@ -179,9 +169,68 @@ input[type=button] {
 					  }
 					 });
 			});
+
+			$("#comment_input_form2").find("#submit_comment2").on("click", function(){
+				var title = $("#task_title2").val();
+		        var desp = $("#task_descp2").val();
+				var id=$("#myModal").find(".put_id").attr("id");
+				console.log(desp);
+		        console.log(id);
+		        console.log(title);
+			        $.ajax({
+						url:"http://localhost/kanbanProject/UpdateTask.php",
+						method:"POST",
+						data:{
+							   v1:title,
+							   v2:desp,
+							   v3:id
+							   
+							  },
+						success: function(data){
+							$("#"+id).find("span").text("(" + id + ")" + title + ":" + desp);
+							$('#myModal').modal('hide');
+							
+		                    
+						}
+					});
+			});
+			
+			$(".updat_utton").on("click", function(event){
+				var id=$(this).parent("li").attr("id");
+				$("#myModal").find(".put_id").attr("id", id);
+				
+			});
+
+			
+			
 		}
 
 
+	//===============================
+
+		//==============  Update Task_content   =================
+		function update_task() {
+			
+		}
+		
+			
+		
+// 		$("#comment_input_form2").on("submit", function(event){
+// 			event.preventDefault();
+// 			$.ajax({
+// 				url:"http://localhost/kanbanProject/display.php",
+// 				method:"POST",
+// 				data:$("#comment_input_form2").serialize(),
+// 				success: function(data){
+// 					console.log('data1= ',data);
+// 					var ele = JSON.parse(data);
+//                     $("#toDo").append('<li class="card">' + ele.task_title +
+//                              '<button id="delete_button" class="btn btn-danger" > x </button>'+
+//                              '<button id="update_button" class="update btn btn-success" data-toggle="modal" data-target="#myModal"> <i class="fa fa-pencil" aria-hidden="true"></i></button>'+'</li>');
+// 					console.log('ele= ',ele.task_title);
+// 				}
+// 			})
+// 		});
 	//===============================
 		
 
@@ -224,15 +273,6 @@ input[type=button] {
 		<h2>TODO</h2>
 
 		<ul class="sortable connectedSortable" id="toDo">
-<!-- 			<li class="card">Activity A1 -->
-<!-- 				<button color="red" class="btn btn-danger remove-item">x</button> -->
-<!-- 			</li> -->
-<!-- 			<li class="card">Activity A2 -->
-<!-- 				<button color="red" class="btn btn-danger remove-item">x</button> -->
-<!-- 			</li> -->
-<!-- 			<li class="card">Activity A3 -->
-<!-- 				<button color="red" class="btn btn-danger remove-item">x</button> -->
-<!-- 			</li> -->
 		</ul>
 		<form class="link-div" name="taskForm" id="comment_input_form">
 
@@ -249,24 +289,13 @@ input[type=button] {
 
 		<ul class="sortable connectedSortable" id="inProgress">
 
-<!-- 			<li class="card">Activity B1 -->
-<!-- 				<button color="red">x</button> -->
-<!-- 			</li> -->
-<!-- 			<li class="card">Activity B2 -->
-<!-- 				<button color="red">x</button> -->
-<!-- 			</li> -->
 		</ul>
 
 	</div>
 	<div class="container" style="background-color: yellow;">
 		<h2>Verification</h2>
 		<ul class="sortable connectedSortable" id="test">
-<!-- 			<li class="card">Activity C1 -->
-<!-- 				<button color="red">x</button> -->
-<!-- 			</li> -->
-<!-- 			<li class="card">Activity C2 -->
-<!-- 				<button color="red">x</button> -->
-<!-- 			</li> -->
+
 		</ul>
 	</div>
 	<div class="container" style="background-color: green;">
@@ -275,6 +304,38 @@ input[type=button] {
 		</ul>
 	</div>
 </div>
+
+<!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+    	
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Modal Header</h4>
+        </div>
+        <div class="modal-body">
+          <form class="link-div" name="taskForm2" id="comment_input_form2">
+			<input type="hidden" class="put_id" id="task_id">
+			<label>Task Title:</label><br/>
+			<input type="text" name="task_title2" id="task_title2" /></br>
+			<label>Task Description:</label></br>
+			<textarea id="task_descp2" name="task_descp2"></textarea></br>
+			<input type="hidden" name="display" value="1" /></br>
+			<button type="button" name="btnAddNew2" id="submit_comment2" class="btn btn-success add-button" > Save </button></br>
+
+		</form>
+          
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
 <script
 	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </html>
